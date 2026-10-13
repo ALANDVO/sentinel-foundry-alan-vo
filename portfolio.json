@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "sentinel-foundry-alan-vo",
+  "owner": "ALANDVO",
+  "email": "alanvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "summary": "Work in progress: sentinel-foundry-alan-vo",
+  "workflows": [
+    "Configure multiple LLM providers and route requests with automatic failover on failures",
+    "Monitor provider health in real-time via dashboard with circuit breaker visualization",
+    "Persist and resume coding sessions across restarts with full conversation history"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "status": "work-in-progress"
+}
