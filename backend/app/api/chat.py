@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any, AsyncIterator
 import json
@@ -9,9 +8,8 @@ import logging
 import uuid
 
 from app.core.database import get_session_dependency
-from app.core.auth import get_current_user_optional, audit_log
+from app.core.auth import get_current_user_optional
 from app.services import get_router, ChatRequest, ChatMessage, StreamChunk, ProviderError
-from app.models import Session, Message, RequestLog
 
 router = APIRouter(prefix="/v1", tags=["chat"])
 

@@ -1,28 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional, List
 import logging
 
 from app.core.database import get_session_dependency
-from app.core.auth import get_current_user, require_operator, require_admin, audit_log
-from app.models import Provider, ProviderHealth, RequestLog
-from app.services import get_router, ProviderConfig
+from app.core.auth import get_current_user, require_operator, audit_log
+from app.models import Provider
+from app.services import get_router
 
 router = APIRouter(prefix="/api/v1/providers", tags=["providers"])
 
 logger = logging.getLogger(__name__)
 
 
-from pydantic import BaseModel, Field, HttpUrl
-from typing import Optional, List
-import logging
-
-from app.core.database import get_session_dependency
-from app.core.auth import get_current_user, require_operator, require_admin, audit_log
-from app.models import Provider, ProviderHealth, RequestLog
-from app.services import get_router, ProviderConfig
 
 
 class ProviderUpdate(BaseModel):

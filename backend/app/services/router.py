@@ -3,12 +3,11 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import asyncio
 import logging
-import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func
 
-from app.models import Provider, ProviderHealth, RequestLog, Session, Message
+from app.models import Provider, ProviderHealth, RequestLog
 from app.services.providers import (
     BaseProvider,
     ProviderConfig,
