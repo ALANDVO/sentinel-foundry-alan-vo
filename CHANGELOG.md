@@ -1,8 +1,26 @@
 # Changelog
 
-## 1.1.0 — work-in-progress checkpoint
+## 1.2.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
+
+## 1.1.0 — work-in-progress checkpoint
+
+### Added
+- Full multi-provider engine implementation in `backend/app/services/providers.py`:
+  - BaseProvider abstract class with configurable retry logic, timeout handling, and streaming support
+  - OpenAICompatibleProvider for OpenAI-compatible APIs (OpenAI, Azure OpenAI, local OpenAI-compatible servers)
+  - AnthropicProvider for Anthropic Claude API with proper header formatting and message conversion
+  - GeminiProvider for Google Gemini API with generation config and function calling support
+  - OllamaProvider for local Ollama instances with options configuration
+  - ProviderConfig, ChatMessage, ChatRequest, ChatResponse, StreamChunk data classes
+  - ProviderError exception with status_code, provider, and retryable fields
+  - create_provider factory function for dynamic provider instantiation
+- Circuit breaker integration in ProviderRouter for automatic failover
+- Request/response logging with error tracking
+
+### Changed
+- Replaced stub providers.py (single line "test") with complete implementation (~500 lines)
 
 ## 1.0.0 — work-in-progress checkpoint
 
