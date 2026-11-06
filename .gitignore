@@ -45,3 +45,13 @@ logs/
 .tox/
 .mypy_cache/
 venv/
+.turbo/
+**/data/media/
+*.pyc
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
