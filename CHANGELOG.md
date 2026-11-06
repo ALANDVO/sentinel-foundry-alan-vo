@@ -1,8 +1,15 @@
 # Changelog
 
+## 1.3.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.2.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
+
+### Fixed
+- Chat API: Added `metadata` field to `ChatRequest` dataclass in `backend/app/services/providers.py` to fix `TypeError` when calling Anthropic `/v1/messages` endpoint. The `convert_anthropic_to_internal` function was passing `metadata` but the dataclass didn't have the field.
 
 ## 1.1.0 — work-in-progress checkpoint
 

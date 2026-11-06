@@ -36,6 +36,7 @@ class ChatRequest:
     tools: Optional[List[Dict[str, Any]]] = None
     tool_choice: Optional[str] = None
     stream: bool = False
+    metadata: Dict[str, Any] = field(default_factory=dict)
     extra_params: Dict[str, Any] = field(default_factory=dict)
 
 @dataclass
