@@ -55,3 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CSRF protection on state-changing operations
 - Role-based access control (viewer, operator, admin)
 - Demo mode explicitly gated and refused in production
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

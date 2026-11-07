@@ -76,3 +76,6 @@ Implementation: `backend/app/api/sessions.py`, `backend/app/models/__init__.py`,
 
 Tests: `backend/tests/test_sessions.py`
 
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)
