@@ -95,6 +95,21 @@ class BaseProvider(ABC):
     @abstractmethod
     def _parse_response(self, data: Dict[str, Any]) -> ChatResponse:
         pass
+    @abstractmethod
+    async def health_check(self) -> tuple[bool, Optional[int], Optional[str]]:
+        """
+        Check provider health.
+        Returns: (healthy, latency_ms, error_message)
+        """
+        pass
+
+    @abstractmethod
+    async def list_models(self) -> List[str]:
+        """List available models from the provider."""
+        pass
+    @abstractmethod
+    async def chat(self, request: ChatRequest) -> ChatResponse:
+        pass
 
     @abstractmethod
     def _parse_stream_chunk(self, line: str) -> Optional[StreamChunk]:
@@ -253,6 +268,75 @@ class OpenAICompatibleProvider(BaseProvider):
         except json.JSONDecodeError:
             return None
 
+    async def health_check(self) -> tuple[bool, Optional[int], Optional[str]]:
+        """Check provider health by making a minimal request."""
+        import time
+        start = time.time()
+        try:
+            client = self._get_client()
+            # Use models endpoint for health check (lighter than chat/completions)
+            base = self.config.base_url.rstrip("/")
+            headers = self._get_headers()
+            response = await client.get(f"{base}/models", headers=headers, timeout=5.0)
+            latency_ms = int((time.time() - start) * 1000)
+            if response.status_code == 200:
+                return True, latency_ms, None
+            return False, latency_ms, f"HTTP {response.status_code}: {response.text}"
+        except Exception as e:
+            latency_ms = int((time.time() - start) * 1000)
+            return False, latency_ms, str(e)
+
+    async def list_models(self) -> List[str]:
+        """List available models from the provider."""
+        try:
+            client = self._get_client()
+            base = self.config.base_url.rstrip("/")
+            headers = self._get_headers()
+            response = await client.get(f"{base}/models", headers=headers, timeout=10.0)
+            response.raise_for_status()
+            data = response.json()
+            models = []
+            for item in data.get("data", []):
+                model_id = item.get("id")
+                if model_id:
+                    models.append(model_id)
+            return models
+        except Exception:
+            return []
+    async def health_check(self) -> tuple[bool, Optional[int], Optional[str]]:
+        """Check provider health by making a minimal request."""
+        import time
+        start = time.time()
+        try:
+            client = self._get_client()
+            # Anthropic doesn't have a /models endpoint, so use a minimal chat request
+            base = self.config.base_url.rstrip("/")
+            headers = self._get_headers()
+            # Try a simple request to check connectivity
+            response = await client.post(
+                f"{base}/v1/messages",
+                headers=headers,
+                json={
+                    "model": self.config.model or "claude-3-haiku-20240307",
+                    "messages": [{"role": "user", "content": "Hi"}],
+                    "max_tokens": 1,
+                },
+                timeout=5.0,
+            )
+            latency_ms = int((time.time() - start) * 1000)
+            if response.status_code in (200, 400, 401):  # 400/401 = auth issue but service reachable
+                return True, latency_ms, None
+            return False, latency_ms, f"HTTP {response.status_code}: {response.text}"
+        except Exception as e:
+            latency_ms = int((time.time() - start) * 1000)
+            return False, latency_ms, str(e)
+
+    async def list_models(self) -> List[str]:
+        """Anthropic doesn't have a models endpoint, return configured model."""
+        if self.config.model:
+            return [self.config.model]
+        return ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"]
+
 class AnthropicProvider(BaseProvider):
     def _get_headers(self) -> Dict[str, str]:
         return {
@@ -371,6 +455,38 @@ class AnthropicProvider(BaseProvider):
         except json.JSONDecodeError:
             return None
 
+    async def health_check(self) -> tuple[bool, Optional[int], Optional[str]]:
+        """Check provider health by making a minimal request."""
+        import time
+        start = time.time()
+        try:
+            client = self._get_client()
+            base = self.config.base_url.rstrip("/")
+            headers = self._get_headers()
+            response = await client.post(
+                f"{base}/v1/messages",
+                headers=headers,
+                json={
+                    "model": self.config.model or "claude-3-haiku-20240307",
+                    "messages": [{"role": "user", "content": "Hi"}],
+                    "max_tokens": 1,
+                },
+                timeout=5.0,
+            )
+            latency_ms = int((time.time() - start) * 1000)
+            if response.status_code in (200, 400, 401):
+                return True, latency_ms, None
+            return False, latency_ms, f"HTTP {response.status_code}: {response.text}"
+        except Exception as e:
+            latency_ms = int((time.time() - start) * 1000)
+            return False, latency_ms, str(e)
+
+    async def list_models(self) -> List[str]:
+        """Anthropic doesn't have a models endpoint, return configured model."""
+        if self.config.model:
+            return [self.config.model]
+        return ["claude-3-haiku-20240307", "claude-3-sonnet-20240229", "claude-3-opus-20240229"]
+
 class GeminiProvider(BaseProvider):
     def _get_headers(self) -> Dict[str, str]:
         return {"Content-Type": "application/json"}
@@ -449,6 +565,60 @@ class GeminiProvider(BaseProvider):
         except json.JSONDecodeError:
             return None
 
+    async def health_check(self) -> tuple[bool, Optional[int], Optional[str]]:
+        """Check provider health by making a minimal request."""
+        import time
+        start = time.time()
+        try:
+            client = self._get_client()
+            # Use a simple generateContent request for health check
+            base = self.config.base_url.rstrip("/")
+            model = self.config.model or "gemini-pro"
+            api_key = self.config.api_key
+            if api_key:
+                endpoint = f"{base}/v1beta/models/{model}:generateContent?key={api_key}"
+            else:
+                endpoint = f"{base}/v1beta/models/{model}:generateContent"
+            headers = self._get_headers()
+            response = await client.post(
+                endpoint,
+                headers=headers,
+                json={"contents": [{"role": "user", "parts": [{"text": "Hi"}]}]},
+                timeout=5.0,
+            )
+            latency_ms = int((time.time() - start) * 1000)
+            if response.status_code in (200, 400, 401):
+                return True, latency_ms, None
+            return False, latency_ms, f"HTTP {response.status_code}: {response.text}"
+        except Exception as e:
+            latency_ms = int((time.time() - start) * 1000)
+            return False, latency_ms, str(e)
+
+    async def list_models(self) -> List[str]:
+        """List available models from Gemini."""
+        try:
+            client = self._get_client()
+            base = self.config.base_url.rstrip("/")
+            api_key = self.config.api_key
+            if api_key:
+                endpoint = f"{base}/v1beta/models?key={api_key}"
+            else:
+                endpoint = f"{base}/v1beta/models"
+            headers = self._get_headers()
+            response = await client.get(endpoint, headers=headers, timeout=10.0)
+            response.raise_for_status()
+            data = response.json()
+            models = []
+            for item in data.get("models", []):
+                name = item.get("name", "")
+                if name.startswith("models/"):
+                    models.append(name[7:])  # Remove "models/" prefix
+            return models
+        except Exception:
+            if self.config.model:
+                return [self.config.model]
+            return ["gemini-pro", "gemini-pro-vision", "gemini-1.5-pro", "gemini-1.5-flash"]
+
 class OllamaProvider(BaseProvider):
     def _get_headers(self) -> Dict[str, str]:
         return {"Content-Type": "application/json"}
@@ -513,6 +683,43 @@ class OllamaProvider(BaseProvider):
         except json.JSONDecodeError:
             return None
 
+    async def health_check(self) -> tuple[bool, Optional[int], Optional[str]]:
+        """Check provider health by making a minimal request."""
+        import time
+        start = time.time()
+        try:
+            client = self._get_client()
+            base = self.config.base_url.rstrip("/")
+            headers = self._get_headers()
+            # Ollama has a /api/tags endpoint for listing models
+            response = await client.get(f"{base}/api/tags", headers=headers, timeout=5.0)
+            latency_ms = int((time.time() - start) * 1000)
+            if response.status_code == 200:
+                return True, latency_ms, None
+            return False, latency_ms, f"HTTP {response.status_code}: {response.text}"
+        except Exception as e:
+            latency_ms = int((time.time() - start) * 1000)
+            return False, latency_ms, str(e)
+
+    async def list_models(self) -> List[str]:
+        """List available models from Ollama."""
+        try:
+            client = self._get_client()
+            base = self.config.base_url.rstrip("/")
+            headers = self._get_headers()
+            response = await client.get(f"{base}/api/tags", headers=headers, timeout=10.0)
+            response.raise_for_status()
+            data = response.json()
+            models = []
+            for item in data.get("models", []):
+                name = item.get("name")
+                if name:
+                    models.append(name)
+            return models
+        except Exception:
+            if self.config.model:
+                return [self.config.model]
+            return []
 def create_provider(config: ProviderConfig) -> BaseProvider:
     provider_type = config.type.lower()
 
