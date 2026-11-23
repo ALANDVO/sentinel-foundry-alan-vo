@@ -76,7 +76,7 @@ def convert_anthropic_to_internal(req: AnthropicRequest) -> ChatRequest:
         stream=req.stream,
         tools=req.tools,
         tool_choice=req.tool_choice.get("type") if req.tool_choice else None,
-        metadata=req.metadata,
+        metadata=req.metadata or {},
     )
 
 
