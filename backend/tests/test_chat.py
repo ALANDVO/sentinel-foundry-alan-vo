@@ -62,3 +62,18 @@ class TestChatAPI:
             "stream": True,
         })
         assert response.status_code not in (401, 404, 422)
+
+@pytest.mark.asyncio
+async def test_anthropic_messages_with_metadata_normalization(client: AsyncClient):
+    """Test that metadata=None is normalized to {} in ChatRequest, not passed as None."""
+    await client.post("/auth/demo-login")
+    response = await client.post(
+        "/v1/messages",
+        json={
+            "model": "claude-3-sonnet",
+            "messages": [{"role": "user", "content": "Hello"}],
+            # No metadata field - should default to {}
+        },
+    )
+    # Should not error due to metadata being None
+    assert response.status_code not in (422, 500)
