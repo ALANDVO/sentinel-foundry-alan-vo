@@ -1,6 +1,13 @@
 # Changelog
 
+## 1.7.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.6.0 — work-in-progress checkpoint
+
+- Fixed: Provider `extra_config` normalization in `backend/app/services/router.py` — `extra_config=None` from database NULL is now normalized to `{}` when loading providers, preventing potential `AttributeError` when code accesses `.get()` on it.
+- Fixed: Chat API metadata normalization in `backend/app/api/chat.py` — `metadata=None` is normalized to `{}` in `convert_anthropic_to_internal`, preventing validation errors.
 
 Partial code published for continued development. Known issues: STATUS.md.
 
