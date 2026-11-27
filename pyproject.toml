@@ -1,6 +1,6 @@
 [project]
 name = "sentinel-foundry"
-version = "1.6.0"
+version = "1.7.0"
 description = "Multi-provider AI proxy for developer tools with health monitoring and failover"
 readme = "README.md"
 license = {text = "MIT"}

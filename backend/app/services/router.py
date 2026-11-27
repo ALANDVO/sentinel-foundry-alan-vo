@@ -78,7 +78,7 @@ class ProviderRouter:
                 model=p.model,
                 timeout_seconds=p.timeout_seconds,
                 max_retries=p.max_retries,
-                extra_config=p.extra_config,
+                extra_config=p.extra_config or {},
             )
             self._providers[p.id] = create_provider(config)
             self._circuit_breakers[p.id] = CircuitBreakerState()
